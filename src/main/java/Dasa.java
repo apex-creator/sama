@@ -1,13 +1,16 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.nio.file.*;
 import java.sql.Time;
 
 public class Dasa {
 
-    public void  slave(String fileName) throws Exception{
+    public void  slave(String PathToSync) throws Exception{
+
 
        WatchService watchService = FileSystems.getDefault().newWatchService();
 
-       Path DirToWatch = Paths.get("/home/Rappy/sama/src/main/java/test_dir");
+       Path DirToWatch = Paths.get(PathToSync);
 
        DirToWatch.register(watchService,StandardWatchEventKinds.ENTRY_MODIFY,
                StandardWatchEventKinds.ENTRY_CREATE,
@@ -32,8 +35,16 @@ public class Dasa {
 
                Path filename = (Path)  event.context();
                Path fullpath = DirToWatch.resolve(filename);
-               System.out.println(" pinged  " + kind.name() + fullpath);
-               System.out.println("...");
+               String EventName = kind.name();
+               if (EventName == "ENTRY_CREATE"){
+                   System.out.println(" file created : " + filename);
+               }
+               if (EventName == "ENTRY_MODIFY"){
+                   System.out.println(" File modified : " + filename);
+               }
+               if (EventName == "ENTRY_DELETE"){
+                   System.out.println(" file deleted : " + filename);
+               }
 
            }
 

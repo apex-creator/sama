@@ -1,8 +1,16 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.File;
 import java.util.Scanner;
 
 public class main {
 
     static void main(String[] args) throws Exception {
+
+        ObjectMapper mapper  = new ObjectMapper();
+        ObjectNode node = mapper.createObjectNode();
+
 
         System.out.println("intiating SAMA...");
 
@@ -27,15 +35,29 @@ public class main {
         System.out.println("swami > 2.");
 
         Scanner designation = new Scanner(System.in);
-        System.out.println("Please enter your designation >>> ");
+        System.out.print("Please enter your designation >>> ");
         int input = Integer.parseInt(designation.nextLine());
 
         switch (input){
             case 1:
 
                 System.out.println("Understood >>> " + ipv4+ " >> " + "Dasa(slave).");
+                System.out.print("Enter the Directory you want to Sync.>>> ");
+                String PathToSync = designation.nextLine();
+                String RegisteredPath = PathToSync;
+
+                node.put(ipv4 , "dasa");
+                node.put("File Path: ",RegisteredPath);
+                mapper.writeValue(new File("register.json"), node);
                 Dasa dasa = new Dasa();
-                dasa.slave("hello.json");
+                Thread access = new Thread(() ->{
+                    try {
+                        dasa.slave(PathToSync);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                access.start();
 
                 break;
             case 2:

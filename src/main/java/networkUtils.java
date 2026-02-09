@@ -5,25 +5,25 @@ import java.util.Enumeration;
 
 public class networkUtils {
 
-    public static String FindIp(){
+    public static String FindIp() {
         try {
             Enumeration<NetworkInterface> NetInt = NetworkInterface.getNetworkInterfaces();
-            while (NetInt.hasMoreElements()){
+            while (NetInt.hasMoreElements()) {
                 NetworkInterface iface = NetInt.nextElement();
 
-                if (iface.isLoopback() || !iface.isUp()){
+                if (iface.isLoopback() || !iface.isUp()) {
                     continue;
                 }
 
                 Enumeration<InetAddress> address = iface.getInetAddresses();
-                while (address.hasMoreElements())   {
+                while (address.hasMoreElements()) {
                     InetAddress addr = address.nextElement();
-                    if (addr instanceof Inet4Address){
+                    if (addr instanceof Inet4Address) {
                         return addr.getHostAddress();
                     }
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             return null;
         }
 

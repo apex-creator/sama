@@ -8,7 +8,7 @@ public class main {
 
     static void main(String[] args) throws Exception {
 
-        ObjectMapper mapper  = new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
 
 
@@ -16,13 +16,13 @@ public class main {
 
         String ipv4 = null;
 
-        while( ipv4  == null ){
+        while (ipv4 == null) {
             ipv4 = networkUtils.FindIp();
-            if(ipv4 == null){
+            if (ipv4 == null) {
                 System.out.println("Couldn't connect to the network...");
                 try {
                     Thread.sleep(2000);
-                }catch (InterruptedException e){
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     System.out.println("interrupted, exiting...");
                     return;
@@ -38,19 +38,19 @@ public class main {
         System.out.print("Please enter your designation >>> ");
         int input = Integer.parseInt(designation.nextLine());
 
-        switch (input){
+        switch (input) {
             case 1:
 
-                System.out.println("Understood >>> " + ipv4+ " >> " + "Dasa(slave).");
+                System.out.println("Understood >>> " + ipv4 + " >> " + "Dasa(slave).");
                 System.out.print("Enter the Directory you want to Sync.>>> ");
                 String PathToSync = designation.nextLine();
                 String RegisteredPath = PathToSync;
 
-                node.put(ipv4 , "dasa");
-                node.put("File Path: ",RegisteredPath);
+                node.put(ipv4, "dasa");
+                node.put("File Path: ", RegisteredPath);
                 mapper.writeValue(new File("register.json"), node);
                 Dasa dasa = new Dasa();
-                Thread access = new Thread(() ->{
+                Thread access = new Thread(() -> {
                     try {
                         dasa.slave(PathToSync);
                     } catch (Exception e) {

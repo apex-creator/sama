@@ -33,13 +33,13 @@ public class Dasa {
                 Path filename = (Path) event.context();
                 Path fullpath = DirToWatch.resolve(filename);
                 String EventName = kind.name();
-                if (EventName == "ENTRY_CREATE") {
+                if (EventName.equals("ENTRY_CREATE")) {
                     System.out.println(" file created : " + filename);
                 }
-                if (EventName == "ENTRY_MODIFY") {
+                if (EventName.equals("ENTRY_MODIFY")) {
                     System.out.println(" File modified : " + filename);
                 }
-                if (EventName == "ENTRY_DELETE") {
+                if (EventName.equals("ENTRY_DELETE")) {
                     System.out.println(" file deleted : " + filename);
                 }
 

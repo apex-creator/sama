@@ -22,8 +22,6 @@ public class main {
             }
         }
 
-        Appstate update = MemReader.read();
-
         System.out.println("What's your designation in the network> ?");
         System.out.println("dasa  > 1.");
         System.out.println("swami > 2.");
@@ -31,10 +29,13 @@ public class main {
         Scanner designation = new Scanner(System.in);
         System.out.println("Please enter your designation >>> ");
         int input = Integer.parseInt(designation.nextLine());
+
         switch (input){
             case 1:
-                Dasa slave = new Dasa();
-                slave.slave("hello.json");
+
+                System.out.println("Understood >>> " + ipv4+ " >> " + "Dasa(slave).");
+                Dasa dasa = new Dasa();
+                dasa.slave("hello.json");
 
                 break;
             case 2:

@@ -5,33 +5,45 @@ public class Dasa {
 
     public void  slave(String fileName) throws Exception{
 
-        Path dir  = Paths.get(".");
-        WatchService  watcher = FileSystems.getDefault().newWatchService();
+       WatchService watchService = FileSystems.getDefault().newWatchService();
 
-        dir.register(
-                watcher,
-                StandardWatchEventKinds.ENTRY_MODIFY
-        );
+       Path DirToWatch = Paths.get("/home/Rappy/sama/src/main/java/test_dir");
 
-        while (true){
-            WatchKey key  =watcher.take();
+       DirToWatch.register(watchService,StandardWatchEventKinds.ENTRY_MODIFY,
+               StandardWatchEventKinds.ENTRY_CREATE,
+               StandardWatchEventKinds.ENTRY_DELETE,
+               StandardWatchEventKinds.OVERFLOW);
 
-            for(WatchEvent<?> event : key.pollEvents()){
-                Path changed = (Path)event.context();
-                if(changed.toString().equals(fileName)){
-                    long TimeInstance = System.currentTimeMillis();
-                    Appstate state = MemReader.read();
-                    System.out.println(fileName +" was modifiled " + TimeInstance + state.UpdatedFilepath );
+       while (true){
+           WatchKey key;
 
-                    state.lastUpdated = TimeInstance;
-                    MemWriter.write(state);
+           try{
+               key = watchService.take();
+           }catch (InterruptedException e){
+               break;
+           }
 
-                }
+           for (WatchEvent<?> event : key.pollEvents()){
+               WatchEvent.Kind<?> kind = event.kind();
 
-            }
+               if(kind == StandardWatchEventKinds.OVERFLOW){
+                   continue;
+               }
 
-            key.reset();
-        }
+               Path filename = (Path)  event.context();
+               Path fullpath = DirToWatch.resolve(filename);
+               System.out.println(" pinged  " + kind.name() + fullpath);
+               System.out.println("...");
+
+           }
+
+
+           boolean valid= key.reset();
+           if (!valid){
+               break;
+           }
+       }
+
 
     }
 

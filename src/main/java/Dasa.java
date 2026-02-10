@@ -1,13 +1,15 @@
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import java.nio.file.*;
 
 public class Dasa {
 
-    public void slave(String PathToSync) throws Exception {
+    public void slave(ArrayNode PathToSync) throws Exception {
 
 
         WatchService watchService = FileSystems.getDefault().newWatchService();
 
-        Path DirToWatch = Paths.get(PathToSync);
+        Path DirToWatch = Paths.get(String.valueOf(PathToSync));
 
         DirToWatch.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY,
                 StandardWatchEventKinds.ENTRY_CREATE,

@@ -22,6 +22,16 @@ public class main {
         String ipv4 = null;
         String design = null;
 
+        Dasa dasa = new Dasa();
+        Thread access = new Thread(() -> {
+            try {
+                // PASS THE STRING, NOT THE NODE
+                dasa.slave(node.get(0).asText());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
 
         //finds IP if fails retries every 2 seconds
         while (ipv4 == null) {
@@ -59,6 +69,7 @@ public class main {
 
         if (config.hasNonNull("design")) {
             design = config.get("design").asText();
+            access.run();
         } else {
             System.out.println("please enter your designations in the network....");
             System.out.println("Dasa(slave)   ==>  1");
@@ -79,20 +90,13 @@ public class main {
                         mapper.writeValue(configFile, config);
                         System.out.println("<<<MEOMORY_UPDATED>>>");
                     }
+                    access.run();
 
 
-                    Dasa dasa = new Dasa();
-                    Thread access = new Thread(() -> {
-                        try {
-                            // PASS THE STRING, NOT THE NODE
-                            dasa.slave(node.get(0).asText());
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    access.start();
                 }
             }
+
+            Path();
 
 
         }
@@ -100,11 +104,13 @@ public class main {
     }
 
     static void Path() {
-        Thread newENT = new Thread();
-        Scanner sc = new Scanner(System.in);
-        System.out.println("PLease enter additional paths...");
-        String newPaths = sc.nextLine();
-        node.add(newPaths);
+        Thread newENT = new Thread(() -> {
+            Scanner sc = new Scanner(System.in);
+            System.out.println("PLease enter additional paths...");
+            String newPaths = sc.nextLine();
+            node.add(newPaths);
+        });
+        newENT.start();
 
     }
 

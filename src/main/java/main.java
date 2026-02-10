@@ -11,6 +11,7 @@ public class main {
     static ObjectMapper mapper = new ObjectMapper();
     static ObjectNode config;
     static ArrayNode node = null;
+    String path = null;
 
 
     static void main(String[] args) throws Exception {
@@ -20,7 +21,6 @@ public class main {
 
         String ipv4 = null;
         String design = null;
-        String path = null;
 
 
         //finds IP if fails retries every 2 seconds
@@ -40,21 +40,22 @@ public class main {
 
 
         //checks if config files exist if it doesn't then create it
-        if (configFile.exists() && configFile.length()>0){
+        if (configFile.exists() && configFile.length() > 0) {
             config = (ObjectNode) mapper.readTree(configFile);
-
-
-            if (node == null){
-                node = mapper.createArrayNode();
-                config.set("path",node);
-            }
-        }else {
-            config =mapper.createObjectNode();
-            node = mapper.createArrayNode();
-            config.set("path",node);
+        } else {
+            config = mapper.createObjectNode();
         }
 
-        //now this will ask the initial setup before intializing the sync
+
+        // LOAD OR CREATE PATH ARRAY
+        JsonNode existing = config.get("path");
+        if (existing != null && existing.isArray()) {
+            node = (ArrayNode) existing;
+        } else {
+            node = mapper.createArrayNode();
+            config.set("path", node);
+        }
+
 
         if(config.hasNonNull("design")){
             design =  config.get("design").asText();
@@ -64,31 +65,31 @@ public class main {
             System.out.println("Swami(master) ==>  2");
             System.out.print("================>  ");
             int des = sc.nextInt();
+            sc.nextLine(); // consume newline
             if ((des == 1) || (des == 2)){
                 System.out.println("thanks.");
                 if (des ==1){
-                   config.put("design",config);
-                   if (config.hasNonNull("path")){
-                       node = (ArrayNode) config.get("path");
-                       Dasa dasa = new Dasa();
-                       ArrayNode finalNode = node;
-                       Thread access = new Thread(() -> {
-                           try {
-                               dasa.slave(finalNode);
-                           } catch (Exception e) {
-                               throw new RuntimeException(e);
-                           }
-                       });
-                       access.start();
+                   config.put("design","slave");
 
-
-
-                }else {
-                       System.out.print("enter the path you want to synchronise... ");
-                       String newPath = sc.nextLine();
-
+                   if (node.isEmpty()){
+                       System.out.println("no directories found ...");
+                       System.out.println("Enter the directores you want synchronise...");
+                       String path = sc.nextLine();
+                       node.add(path);
 
                    }
+
+
+                    Dasa dasa = new Dasa();
+                    Thread access = new Thread(() -> {
+                        try {
+                            // PASS THE STRING, NOT THE NODE
+                            dasa.slave(node);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    access.start();
             }
         }
 
@@ -108,6 +109,7 @@ public class main {
         Scanner sc = new Scanner(System.in);
         System.out.println("PLease enter additional paths...");
         String newPaths = sc.nextLine();
+        node.add(newPaths);
 
     }
 

@@ -24,13 +24,13 @@ public class main {
 
 
         //finds IP if fails retries every 2 seconds
-        while(ipv4 ==null){
+        while (ipv4 == null) {
             ipv4 = networkUtils.FindIp();
-            if (ipv4 ==null){
+            if (ipv4 == null) {
                 System.out.println("couldnt connect! CHECK YOUR INTERNET CONNECTION");
                 try {
                     Thread.sleep(2000);
-                }catch (InterruptedException e){
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     System.out.println("Interrupted, exiting...");
                     return;
@@ -57,54 +57,49 @@ public class main {
         }
 
 
-        if(config.hasNonNull("design")){
-            design =  config.get("design").asText();
-        }else{
+        if (config.hasNonNull("design")) {
+            design = config.get("design").asText();
+        } else {
             System.out.println("please enter your designations in the network....");
             System.out.println("Dasa(slave)   ==>  1");
             System.out.println("Swami(master) ==>  2");
             System.out.print("================>  ");
             int des = sc.nextInt();
             sc.nextLine(); // consume newline
-            if ((des == 1) || (des == 2)){
+            if ((des == 1) || (des == 2)) {
                 System.out.println("thanks.");
-                if (des ==1){
-                   config.put("design","slave");
+                if (des == 1) {
+                    config.put("design", "slave");
 
-                   if (node.isEmpty()){
-                       System.out.println("no directories found ...");
-                       System.out.println("Enter the directores you want synchronise...");
-                       String path = sc.nextLine();
-                       node.add(path);
-
-                   }
+                    if (node.isEmpty()) {
+                        System.out.println("no directories found ...");
+                        System.out.println("Enter the directores you want synchronise...");
+                        String path = sc.nextLine();
+                        node.add(path);
+                        mapper.writeValue(configFile, config);
+                        System.out.println("<<<MEOMORY_UPDATED>>>");
+                    }
 
 
                     Dasa dasa = new Dasa();
                     Thread access = new Thread(() -> {
                         try {
                             // PASS THE STRING, NOT THE NODE
-                            dasa.slave(node);
+                            dasa.slave(node.get(0).asText());
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     });
                     access.start();
+                }
             }
+
+
         }
-
-
-
-
-
-
-
 
     }
 
-}
-
-    static void Path(){
+    static void Path() {
         Thread newENT = new Thread();
         Scanner sc = new Scanner(System.in);
         System.out.println("PLease enter additional paths...");

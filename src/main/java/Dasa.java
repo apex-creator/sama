@@ -1,10 +1,8 @@
-import com.fasterxml.jackson.databind.node.ArrayNode;
-
 import java.nio.file.*;
 
 public class Dasa {
 
-    public void slave(ArrayNode PathToSync) throws Exception {
+    public void slave(String PathToSync) throws Exception {
 
 
         WatchService watchService = FileSystems.getDefault().newWatchService();

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class main {
@@ -12,7 +13,15 @@ public class main {
     static ObjectNode config;
     static ArrayNode node = null;
     String path = null;
+    static Dasa dasa;
 
+    static {
+        try {
+            dasa = new Dasa();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     static void main(String[] args) throws Exception {
 
@@ -22,11 +31,11 @@ public class main {
         String ipv4 = null;
         String design = null;
 
-        Dasa dasa = new Dasa();
+
         Thread access = new Thread(() -> {
             try {
                 // PASS THE STRING, NOT THE NODE
-                dasa.slave(node.get(0).asText());
+                dasa.slave(node);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -69,7 +78,7 @@ public class main {
 
         if (config.hasNonNull("design")) {
             design = config.get("design").asText();
-            access.run();
+            access.start(); // I changed run() to start() so it doesn't freeze your app!
         } else {
             System.out.println("please enter your designations in the network....");
             System.out.println("Dasa(slave)   ==>  1");
@@ -90,28 +99,57 @@ public class main {
                         mapper.writeValue(configFile, config);
                         System.out.println("<<<MEOMORY_UPDATED>>>");
                     }
-                    access.run();
+                    access.start(); // Changed run() to start() here too
 
 
                 }
             }
 
-            Path();
+
 
 
         }
-
+        commandLoop(sc);
     }
 
-    static void Path() {
-        Thread newENT = new Thread(() -> {
-            Scanner sc = new Scanner(System.in);
-            System.out.println("PLease enter additional paths...");
-            String newPaths = sc.nextLine();
-            node.add(newPaths);
-        });
-        newENT.start();
+    // This runs in the MAIN thread
+    static void commandLoop(Scanner sc) throws Exception {
+        System.out.println("\n--- --- ---");
+        System.out.println("Type 'add' to watch a new folder.");
+        System.out.println("Type 'list' to see watched folders.");
+        System.out.println("Type 'exit' to stop.");
 
+        while (true) {
+            System.out.print("SAMA> ");
+            String command = sc.nextLine().trim();
+
+            if (command.equalsIgnoreCase("add")) {
+                System.out.print("Enter path: ");
+                String newPath = sc.nextLine();
+
+                // Add to memory
+                node.add(newPath);
+                dasa.registerNewPath(newPath);
+
+                // Save to disk
+                try {
+                    mapper.writeValue(configFile, config);
+                    System.out.println("Path added and saved!");
+
+                } catch (Exception e) {
+                    System.out.println("Failed to save config.");
+                }
+
+            } else if (command.equalsIgnoreCase("list")) {
+                System.out.println("Watched Folders:");
+                for (JsonNode n : node) {
+                    System.out.println(" - " + n.asText());
+                }
+
+            } else if (command.equalsIgnoreCase("exit")) {
+                System.out.println("Shutting down...");
+                System.exit(0);
+            }
+        }
     }
-
 }

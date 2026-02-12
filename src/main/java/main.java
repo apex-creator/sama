@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 public class main {
     public static final Logger log = LoggerFactory.getLogger(main.class);
-    static File configFile = new File("config.json");
+    static File configFile = new File("config_slave.json");
     static ObjectMapper mapper = new ObjectMapper();
 
     static ObjectNode config;
@@ -45,22 +45,6 @@ public class main {
                 throw new RuntimeException(e);
             }
         });
-
-
-        //finds IP if fails retries every 2 seconds
-        while (ipv4 == null) {
-            ipv4 = networkUtils.FindIp();
-            if (ipv4 == null) {
-                log.error("couldnt connect! CHECK YOUR INTERNET CONNECTION");
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    log.error("Interrupted, exiting...");
-                    return;
-                }
-            }
-        }
 
 
         //checks if config files exist if it doesn't then create it
@@ -109,6 +93,10 @@ public class main {
                     access.start();
 
 
+                }
+                if (des == 2) {
+                    Swami swami = new Swami();
+                    System.out.println(swami);
                 }
             }
 

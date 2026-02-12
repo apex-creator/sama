@@ -19,7 +19,14 @@ public class networkUtils {
                 while (address.hasMoreElements()) {
                     InetAddress addr = address.nextElement();
                     if (addr instanceof Inet4Address) {
-                        return addr.getHostAddress();
+                        if (addr == null) {
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException e) {
+
+                            }
+                            return addr.getHostAddress();
+                        }
                     }
                 }
             }

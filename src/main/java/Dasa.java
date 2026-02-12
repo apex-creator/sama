@@ -1,5 +1,7 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -7,8 +9,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Dasa {
-    WatchService watchService = FileSystems.getDefault().newWatchService();
+
+    public static final Logger log = LoggerFactory.getLogger(Dasa.class);
     final Map<WatchKey, Path> keys = new ConcurrentHashMap<>();
+    WatchService watchService = FileSystems.getDefault().newWatchService();
+
     public Dasa() throws IOException {
     }
 
@@ -17,14 +22,13 @@ public class Dasa {
         Path dir = null;
 
 
-
         for (JsonNode Jnode : node) {
 
             String PathtoSync = Jnode.asText().trim();
-             dir = Paths.get(PathtoSync);
+            dir = Paths.get(PathtoSync);
 
             if (!Files.exists(dir) || !Files.isDirectory(dir)) {
-                System.out.println("Skipping invalid directory: " + dir);
+                log.warn("Invalid Directory ", dir);
                 continue;
             }
 
@@ -39,7 +43,6 @@ public class Dasa {
             keys.put(key, dir);
         }
 
-        // EVENT LOOP
         while (true) {
             WatchKey key;
 
@@ -49,7 +52,6 @@ public class Dasa {
                 break;
             }
 
-            // ✅ FIX 3: resolve directory from key
             dir = keys.get(key);
             if (dir == null) {
                 key.reset();
@@ -69,16 +71,16 @@ public class Dasa {
                 String EventName = kind.name();
 
                 if (EventName.equals("ENTRY_CREATE")) {
-                    System.out.println("file created : " + filename + " path: " + fullpath);
+                    log.info("file created  : {}   path: {}", filename, fullpath);
+
                 }
 
                 if (EventName.equals("ENTRY_MODIFY")) {
-                    System.out.println("file modified : " + filename + " path: " + fullpath);
+                    log.info("file modified  : {}   path: {}", filename, fullpath);
+
                 }
 
-                if (EventName.equals("ENTRY_DELETE")) {
-                    System.out.println("file deleted : " + filename + " path: " + fullpath);
-                }
+                if (EventName.equals("ENTRY_DELETE")) log.info("file deleted  : {}   path: {}", filename, fullpath);
             }
 
             boolean valid = key.reset();
@@ -97,7 +99,7 @@ public class Dasa {
         Path dir = Paths.get(path);
 
         if (!Files.exists(dir) || !Files.isDirectory(dir)) {
-            System.out.println("Invalid directory: " + dir);
+            log.warn("Invalid directory: ", dir);
             return;
         }
 
@@ -109,7 +111,7 @@ public class Dasa {
         );
 
         keys.put(key, dir);
-        System.out.println("Now watching: " + dir);
+        log.info("Now watching: ", dir);
     }
 
 }

@@ -2,17 +2,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
 public class main {
+    public static final Logger log = LoggerFactory.getLogger(main.class);
     static File configFile = new File("config.json");
     static ObjectMapper mapper = new ObjectMapper();
+
     static ObjectNode config;
     static ArrayNode node = null;
-    String path = null;
     static Dasa dasa;
 
     static {
@@ -22,6 +25,8 @@ public class main {
             throw new RuntimeException(e);
         }
     }
+
+    String path = null;
 
     static void main(String[] args) throws Exception {
 
@@ -46,12 +51,12 @@ public class main {
         while (ipv4 == null) {
             ipv4 = networkUtils.FindIp();
             if (ipv4 == null) {
-                System.out.println("couldnt connect! CHECK YOUR INTERNET CONNECTION");
+                log.error("couldnt connect! CHECK YOUR INTERNET CONNECTION");
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    System.out.println("Interrupted, exiting...");
+                    log.error("Interrupted, exiting...");
                     return;
                 }
             }
@@ -66,7 +71,6 @@ public class main {
         }
 
 
-        // LOAD OR CREATE PATH ARRAY
         JsonNode existing = config.get("path");
         if (existing != null && existing.isArray()) {
             node = (ArrayNode) existing;
@@ -80,76 +84,85 @@ public class main {
             design = config.get("design").asText();
             access.start(); // I changed run() to start() so it doesn't freeze your app!
         } else {
-            System.out.println("please enter your designations in the network....");
-            System.out.println("Dasa(slave)   ==>  1");
-            System.out.println("Swami(master) ==>  2");
+            log.info("please enter your designations in the network....");
+            log.info("Dasa(slave)   ==>  1");
+            log.info("Swami(master) ==>  2");
             System.out.print("================>  ");
             int des = sc.nextInt();
             sc.nextLine(); // consume newline
             if ((des == 1) || (des == 2)) {
-                System.out.println("thanks.");
+                log.info("thanks.");
                 if (des == 1) {
                     config.put("design", "slave");
 
                     if (node.isEmpty()) {
-                        System.out.println("no directories found ...");
-                        System.out.println("Enter the directores you want synchronise...");
+                        log.info("no directories found ...");
+                        System.out.print("Enter the directores you want synchronise...");
                         String path = sc.nextLine();
                         node.add(path);
-                        mapper.writeValue(configFile, config);
-                        System.out.println("<<<MEOMORY_UPDATED>>>");
+                        mapper
+                                .writerWithDefaultPrettyPrinter()
+                                .writeValue(configFile, config);
+
+                        log.info("<<<MEOMORY_UPDATED>>>");
                     }
-                    access.start(); // Changed run() to start() here too
+                    access.start();
 
 
                 }
             }
-
-
 
 
         }
         commandLoop(sc);
     }
 
-    // This runs in the MAIN thread
     static void commandLoop(Scanner sc) throws Exception {
-        System.out.println("\n--- --- ---");
-        System.out.println("Type 'add' to watch a new folder.");
-        System.out.println("Type 'list' to see watched folders.");
-        System.out.println("Type 'exit' to stop.");
 
+        intro();
         while (true) {
             System.out.print("SAMA> ");
             String command = sc.nextLine().trim();
-
+            if (!command.equalsIgnoreCase("add") || !command.equalsIgnoreCase("list") || command.equalsIgnoreCase("exit")) {
+                System.out.print("INVALID INPUT!!!, PLEASE use ");
+                intro();
+            }
             if (command.equalsIgnoreCase("add")) {
-                System.out.print("Enter path: ");
+                log.info("Enter path: ");
                 String newPath = sc.nextLine();
 
-                // Add to memory
                 node.add(newPath);
                 dasa.registerNewPath(newPath);
 
-                // Save to disk
+
                 try {
-                    mapper.writeValue(configFile, config);
-                    System.out.println("Path added and saved!");
+                    mapper
+                            .writerWithDefaultPrettyPrinter()
+                            .writeValue(configFile, config);
+
+                    log.info("Path added and saved!");
 
                 } catch (Exception e) {
-                    System.out.println("Failed to save config.");
+                    log.warn("Failed to save config.");
                 }
 
             } else if (command.equalsIgnoreCase("list")) {
-                System.out.println("Watched Folders:");
+                log.info("Watched Folders:");
                 for (JsonNode n : node) {
-                    System.out.println(" - " + n.asText());
+                    log.info(" - ", n.asText());
                 }
 
             } else if (command.equalsIgnoreCase("exit")) {
-                System.out.println("Shutting down...");
+                log.info("Shutting down...");
                 System.exit(0);
             }
         }
+    }
+
+    static void intro() {
+        log.info("\n--- --- ---");
+        log.info("Type 'add' to watch a new folder.");
+        log.info("Type 'list' to see watched folders.");
+        log.info("Type 'exit' to stop.");
     }
 }

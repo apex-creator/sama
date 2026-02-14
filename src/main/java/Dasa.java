@@ -51,7 +51,7 @@ public class Dasa {
             log.info("initiating Synchronisation.");
             sendFIle(filepath);
         } catch (Exception e) {
-            log.error("Socketing FAILED.", e);
+            log.error("Socketing FAILED. ", e);
         }
     }
 
@@ -66,7 +66,7 @@ public class Dasa {
             dir = Paths.get(PathtoSync);
 
             if (!Files.exists(dir) || !Files.isDirectory(dir)) {
-                log.warn("Invalid Directory ", dir);
+                log.warn("Invalid Directory {} ", dir);
                 continue;
             }
 
@@ -96,33 +96,33 @@ public class Dasa {
                 continue;
             }
 
-            for (WatchEvent<?> event : key.pollEvents()) {
-                WatchEvent.Kind<?> kind = event.kind();
+            for (WatchEvent<?> event_slave : key.pollEvents()) {
+                WatchEvent.Kind<?> kind_slave = event_slave.kind();
 
-                if (kind == StandardWatchEventKinds.OVERFLOW) {
+                if (kind_slave == StandardWatchEventKinds.OVERFLOW) {
                     continue;
                 }
 
-                Path filename = (Path) event.context();
-                Path fullpath = dir.resolve(filename);
+                Path filename_slave = (Path) event_slave.context();
+                Path fullpath_slave = dir.resolve(filename_slave);
 
-                String EventName = kind.name();
+                String EventName_Slave = kind_slave.name();
 
-                if (EventName.equals("ENTRY_CREATE")) {
-                    log.info("file created  : {}   path: {}", filename, fullpath);
-
-                }
-
-                if (EventName.equals("ENTRY_MODIFY")) {
-                    log.info("file modified  : {}   path: {}", filename, fullpath);
+                if (EventName_Slave.equals("ENTRY_CREATE")) {
+                    log.info("file created  : {}   path: {}", filename_slave, fullpath_slave);
 
                 }
 
-                if (EventName.equals("ENTRY_DELETE")) {
-                    log.info("file deleted  : {}   path: {}", filename, fullpath);
+                if (EventName_Slave.equals("ENTRY_MODIFY")) {
+                    log.info("file modified  : {}   path: {}", filename_slave, fullpath_slave);
+
                 }
 
-                slave_socket(fullpath);
+                if (EventName_Slave.equals("ENTRY_DELETE")) {
+                    log.info("file deleted  : {}   path: {}", filename_slave, fullpath_slave);
+                }
+
+                slave_socket(fullpath_slave);
             }
 
             boolean valid = key.reset();
@@ -141,7 +141,7 @@ public class Dasa {
         Path dir = Paths.get(path);
 
         if (!Files.exists(dir) || !Files.isDirectory(dir)) {
-            log.warn("Invalid directory: ", dir);
+            log.warn("Invalid directory: {} ", dir);
             return;
         }
 
@@ -153,7 +153,7 @@ public class Dasa {
         );
 
         keys.put(key, dir);
-        log.info("Now watching: ", dir);
+        log.info("Now watching: {}", dir);
     }
 
 

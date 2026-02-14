@@ -17,6 +17,7 @@ public class main {
     static ObjectNode config;
     static ArrayNode node = null;
     static Dasa dasa;
+    static Swami swami;
 
     static {
         try {
@@ -81,14 +82,14 @@ public class main {
 
                     if (node.isEmpty()) {
                         log.info("no directories found ...");
-                        System.out.print("Enter the directores you want synchronise...");
+                        System.out.print("Enter the directories you want synchronise...");
                         String path = sc.nextLine();
                         node.add(path);
                         mapper
                                 .writerWithDefaultPrettyPrinter()
                                 .writeValue(configFile, config);
 
-                        log.info("<<<MEOMORY_UPDATED>>>");
+                        log.info("<<<MEMORY_UPDATED>>>");
                     }
                     access.start();
 
@@ -120,8 +121,13 @@ public class main {
                 String newPath = sc.nextLine();
 
                 node.add(newPath);
-                dasa.registerNewPath(newPath);
-
+                String design = config.get("design").asText();
+                if (design.equalsIgnoreCase("slave")) {
+                    dasa.registerNewPath(newPath);
+                }
+                if (design.equalsIgnoreCase("master")) {
+                    swami.registerNewPath(newPath);
+                }
 
                 try {
                     mapper

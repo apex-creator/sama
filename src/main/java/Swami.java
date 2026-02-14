@@ -1,5 +1,134 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class Swami {
-    public void master() {
-        System.out.println(" Swami was called successfully!");
+
+    public static final Logger log = LoggerFactory.getLogger(Swami.class);
+    private static final DataOutputStream datOUT = null;
+    private static final DataInputStream dataIN = null;
+    private static final Map<WatchKey, Path> keys = new ConcurrentHashMap<>();
+    WatchService watchService = FileSystems.getDefault().newWatchService();
+
+    public Swami() throws IOException {
+    }
+
+    private static void recieveFile(Path filePath) {
+        int bytes = 0;
+
+
+    }
+
+    public void master(ArrayNode node) throws IOException {
+
+        Path dir = null;
+
+        for (JsonNode Jnode : node) {
+
+            String PathtoSync = Jnode.asText().trim();
+            dir = Paths.get(PathtoSync);
+
+            if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+                log.warn("Invalid Directory {}", dir);
+                continue;
+            }
+
+            WatchKey key = dir.register(
+                    watchService,
+                    StandardWatchEventKinds.ENTRY_MODIFY,
+                    StandardWatchEventKinds.ENTRY_DELETE,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.OVERFLOW
+            );
+
+            keys.put(key, dir);
+        }
+
+        while (true) {
+            WatchKey key;
+
+            try {
+                key = watchService.take();
+            } catch (InterruptedException e) {
+                log.error("Interrupt in the main API EXITING!!!");
+                break;
+            }
+
+            dir = keys.get(key);
+            if (dir == null) {
+                key.reset();
+                continue;
+            }
+
+            for (WatchEvent<?> event_master : key.pollEvents()) {
+                WatchEvent.Kind<?> kind_master = event_master.kind();
+
+                if (kind_master == StandardWatchEventKinds.OVERFLOW) {
+                    continue;
+                }
+
+                Path filename_master = (Path) event_master.context();
+                Path fullpath_master = dir.resolve(filename_master);
+
+                String EventName_master = kind_master.name();
+
+
+                if (EventName_master.equals("ENTRY_CREATE")) {
+                    log.info("file created  : {}   path: {}", filename_master, fullpath_master);
+
+                }
+
+                if (EventName_master.equals("ENTRY_MODIFY")) {
+                    log.info("file modified  : {}   path: {}", filename_master, fullpath_master);
+
+                }
+
+                if (EventName_master.equals("ENTRY_DELETE")) {
+                    log.info("file deleted  : {}   path: {}", filename_master, fullpath_master);
+                }
+            }
+
+            boolean valid = key.reset();
+            if (!valid) {
+                keys.remove(key);
+                if (keys.isEmpty()) {
+                    break;
+                }
+            }
+        }
+
+
+    }
+
+
+    public void registerNewPath(String path) throws Exception {
+
+        path = path.trim();
+        Path dir = Paths.get(path);
+
+        if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+            log.warn("Invalid directory: {} ", dir);
+            return;
+        }
+
+        WatchKey key = dir.register(
+                watchService,
+                StandardWatchEventKinds.ENTRY_CREATE,
+                StandardWatchEventKinds.ENTRY_MODIFY,
+                StandardWatchEventKinds.ENTRY_DELETE
+        );
+
+        keys.put(key, dir);
+        log.info("Now watching: {}", dir);
     }
 }
+
+

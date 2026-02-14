@@ -38,7 +38,7 @@ public class main {
         String design = null;
 
 
-        Thread access = new Thread(() -> {
+        Thread Dasa = new Thread(() -> {
             try {
                 // PASS THE STRING, NOT THE NODE
                 dasa.slave(node);
@@ -47,6 +47,13 @@ public class main {
             }
         });
 
+        Thread Swami = new Thread(() -> {
+            try {
+                swami.master(node);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         //checks if config files exist if it doesn't then create it
         if (configFile.exists() && configFile.length() > 0) {
@@ -67,7 +74,7 @@ public class main {
 
         if (config.hasNonNull("design")) {
             design = config.get("design").asText();
-            access.start(); // I changed run() to start() so it doesn't freeze your app!
+            Dasa.start(); // I changed run() to start() so it doesn't freeze your app!
         } else {
             log.info("please enter your designations in the network....");
             log.info("Dasa(slave)   ==>  1");
@@ -91,13 +98,27 @@ public class main {
 
                         log.info("<<<MEMORY_UPDATED>>>");
                     }
-                    access.start();
+                    Dasa.start();
 
 
                 }
                 if (des == 2) {
-                    Swami swami = new Swami();
-                    System.out.println(swami);
+
+                    config.put("design", "master");
+
+                    if (node.isEmpty()) {
+                        log.info("no directory found.");
+                        System.out.print("please enter directory you have to synchronise...");
+                        String path = sc.nextLine();
+                        node.add(path);
+                        mapper
+                                .writerWithDefaultPrettyPrinter()
+                                .writeValue(configFile, config);
+
+                        log.info("<<<MEMORY_UPDATED>>>");
+
+                    }
+                    Swami.start();
                 }
             }
 

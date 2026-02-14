@@ -3,9 +3,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.file.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,19 +13,47 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Swami {
 
     public static final Logger log = LoggerFactory.getLogger(Swami.class);
-    private static final DataOutputStream datOUT = null;
-    private static final DataInputStream dataIN = null;
     private static final Map<WatchKey, Path> keys = new ConcurrentHashMap<>();
+    private static DataOutputStream dataOUT = null;
+    private static DataInputStream dataIN = null;
     WatchService watchService = FileSystems.getDefault().newWatchService();
 
     public Swami() throws IOException {
     }
 
-    private static void recieveFile(Path filePath) {
+    private static void recieveFile(Path filePath) throws IOException {
         int bytes = 0;
-
-
+        FileOutputStream fileout = new FileOutputStream(filePath.toFile());
+        long size = dataIN.readLong();
+        byte[] buffer = new byte[4 * 1024];
+        while (size > 0
+                && (bytes = dataIN.read(
+                buffer, 0,
+                (int) Math.min(buffer.length, size)))
+                != -1) {
+            // Here we write the file using write method
+            fileout.write(buffer, 0, bytes);
+            size -= bytes; // read upto file size
+        }
+        log.info("FIle recieved");
+        fileout.close();
     }
+
+
+    public static void Master_socket(Path filePath) {
+        String ipv4 = networkUtils.FindIp();
+        try (ServerSocket servSocket = new ServerSocket(9000)) {
+            log.info("master is at port {} ", 9000);
+            Socket clientSocket = servSocket.accept();
+            log.info("connected.");
+            dataIN = new DataInputStream(clientSocket.getInputStream());
+            dataOUT = new DataOutputStream(clientSocket.getOutputStream());
+            recieveFile(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public void master(ArrayNode node) throws IOException {
 
@@ -94,6 +122,8 @@ public class Swami {
                 if (EventName_master.equals("ENTRY_DELETE")) {
                     log.info("file deleted  : {}   path: {}", filename_master, fullpath_master);
                 }
+
+                Master_socket(filename_master);
             }
 
             boolean valid = key.reset();

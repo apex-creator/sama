@@ -17,8 +17,8 @@ public class Swami {
 
     public static final Logger log = LoggerFactory.getLogger(Swami.class);
     private static final Map<WatchKey, Path> keys = new ConcurrentHashMap<>();
-    private static DataOutputStream dataOUT = null;
-    private static DataInputStream dataIN = null;
+    private static final DataOutputStream dataOUT = null;
+    private static final DataInputStream dataIN = null;
     WatchService watchService = FileSystems.getDefault().newWatchService();
 
     public Swami() throws IOException {

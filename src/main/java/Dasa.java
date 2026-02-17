@@ -11,10 +11,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Dasa {
 
     public static final Logger log = LoggerFactory.getLogger(Dasa.class);
+    static String address = "hello";
+    static int port = 9000;
     final Map<WatchKey, Path> keys = new ConcurrentHashMap<>();
+    private final notif Notif;
     WatchService watchService = FileSystems.getDefault().newWatchService();
 
     public Dasa() throws IOException {
+        notif NOTif = null;
+        this.Notif = NOTif;
     }
 
     public void slave(ArrayNode node) throws Exception {
@@ -43,6 +48,7 @@ public class Dasa {
             keys.put(key, dir);
         }
 
+        String notif = null;
         while (true) {
             WatchKey key;
 
@@ -66,10 +72,16 @@ public class Dasa {
                 }
 
                 Path filename = (Path) event.context();
+                String file = String.valueOf((filename));
                 Path fullpath = dir.resolve(filename);
-
+                String path = String.valueOf((fullpath));
                 String EventName = kind.name();
+                notif = (file + fullpath + EventName);
 
+                if (Notif != null) {
+                    Notif.notif(notif);
+
+                }
                 if (EventName.equals("ENTRY_CREATE")) {
                     log.info("file created  : {}   path: {}", filename, fullpath);
 
@@ -81,6 +93,7 @@ public class Dasa {
                 }
 
                 if (EventName.equals("ENTRY_DELETE")) log.info("file deleted  : {}   path: {}", filename, fullpath);
+
             }
 
             boolean valid = key.reset();
@@ -91,7 +104,9 @@ public class Dasa {
                 }
             }
         }
+
     }
+
 
     public void registerNewPath(String path) throws Exception {
 

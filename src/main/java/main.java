@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
+
 public class main {
     public static final Logger log = LoggerFactory.getLogger(main.class);
     static File configFile = new File("config_slave.json");
@@ -18,6 +19,19 @@ public class main {
     static ArrayNode node = null;
     static Dasa dasa;
     static Swami swami;
+    static SlaveSocket dosa;
+    static String addr = "hello";
+    static int port = 9000;
+
+
+    static {
+        try {
+            dosa = new SlaveSocket();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     static {
         try {
@@ -45,6 +59,10 @@ public class main {
         String ipv4 = null;
         String design = null;
 
+        Thread sambar = new Thread(() -> {
+            dosa.client(addr, port);
+
+        });
 
         Thread Dasa = new Thread(() -> {
             try {
@@ -82,7 +100,9 @@ public class main {
 
         if (config.hasNonNull("design")) {
             design = config.get("design").asText();
-            Dasa.start(); // I changed run() to start() so it doesn't freeze your app!
+            Dasa.start();
+            log.info("Initiating socket thread");
+            sambar.start();
         } else {
             log.info("please enter your designations in the network....");
             log.info("Dasa(slave)   ==>  1");
@@ -107,7 +127,8 @@ public class main {
                         log.info("<<<MEMORY_UPDATED>>>");
                     }
                     Dasa.start();
-
+                    log.info("Initiating socket thread");
+                    sambar.start();
 
                 }
                 if (des == 2) {
@@ -133,6 +154,7 @@ public class main {
 
         }
         commandLoop(sc);
+
     }
 
     static void commandLoop(Scanner sc) throws Exception {

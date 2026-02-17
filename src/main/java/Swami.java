@@ -3,7 +3,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.*;
@@ -19,39 +22,6 @@ public class Swami {
     WatchService watchService = FileSystems.getDefault().newWatchService();
 
     public Swami() throws IOException {
-    }
-
-    private static void recieveFile(Path filePath) throws IOException {
-        int bytes = 0;
-        FileOutputStream fileout = new FileOutputStream(filePath.toFile());
-        long size = dataIN.readLong();
-        byte[] buffer = new byte[4 * 1024];
-        while (size > 0
-                && (bytes = dataIN.read(
-                buffer, 0,
-                (int) Math.min(buffer.length, size)))
-                != -1) {
-            // Here we write the file using write method
-            fileout.write(buffer, 0, bytes);
-            size -= bytes; // read upto file size
-        }
-        log.info("FIle recieved");
-        fileout.close();
-    }
-
-
-    public static void Master_socket(Path filePath) {
-        String ipv4 = networkUtils.FindIp();
-        try (ServerSocket servSocket = new ServerSocket(9000)) {
-            log.info("master is at port {} ", 9000);
-            Socket clientSocket = servSocket.accept();
-            log.info("connected.");
-            dataIN = new DataInputStream(clientSocket.getInputStream());
-            dataOUT = new DataOutputStream(clientSocket.getOutputStream());
-            recieveFile(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 
@@ -80,6 +50,7 @@ public class Swami {
             keys.put(key, dir);
         }
 
+        Path filename_master = null;
         while (true) {
             WatchKey key;
 
@@ -103,7 +74,7 @@ public class Swami {
                     continue;
                 }
 
-                Path filename_master = (Path) event_master.context();
+                filename_master = (Path) event_master.context();
                 Path fullpath_master = dir.resolve(filename_master);
 
                 String EventName_master = kind_master.name();
@@ -123,7 +94,7 @@ public class Swami {
                     log.info("file deleted  : {}   path: {}", filename_master, fullpath_master);
                 }
 
-                Master_socket(filename_master);
+
             }
 
             boolean valid = key.reset();
@@ -133,6 +104,7 @@ public class Swami {
                     break;
                 }
             }
+
         }
 
 

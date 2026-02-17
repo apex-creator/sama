@@ -21,6 +21,14 @@ public class main {
 
     static {
         try {
+            swami = new Swami();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static {
+        try {
             dasa = new Dasa();
         } catch (IOException e) {
             throw new RuntimeException(e);

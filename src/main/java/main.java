@@ -20,13 +20,12 @@ public class main {
     static Dasa dasa;
     static Swami swami;
     static SlaveSocket dosa;
-    static String addr = "hello";
-    static int port = 9000;
 
 
     static {
         try {
             dosa = new SlaveSocket();
+            dasa = new Dasa(dosa);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -41,13 +40,6 @@ public class main {
         }
     }
 
-    static {
-        try {
-            dasa = new Dasa();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     String path = null;
 
@@ -56,13 +48,9 @@ public class main {
 
         Scanner sc = new Scanner(System.in);
 
-        String ipv4 = null;
+
         String design = null;
 
-        Thread sambar = new Thread(() -> {
-            dosa.client(addr, port);
-
-        });
 
         Thread Dasa = new Thread(() -> {
             try {
@@ -101,7 +89,16 @@ public class main {
         if (config.hasNonNull("design")) {
             design = config.get("design").asText();
             Dasa.start();
-            log.info("Initiating socket thread");
+            String IPv4 = config.get("SwamiIP").asText();
+            int port = config.get("port").asInt();
+            Thread sambar = new Thread(() -> {
+                try {
+                    dosa.client(IPv4, port);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+            });
             sambar.start();
         } else {
             log.info("please enter your designations in the network....");
@@ -127,7 +124,18 @@ public class main {
                         log.info("<<<MEMORY_UPDATED>>>");
                     }
                     Dasa.start();
-                    log.info("Initiating socket thread");
+                    System.out.print("Enter the IP of your swami or master module...");
+                    String ipv4 = sc.nextLine();
+                    System.out.print("Enter the port of your swami or master module...");
+                    int port = sc.nextInt();
+                    Thread sambar = new Thread(() -> {
+                        try {
+                            dosa.client(ipv4, port);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                    });
                     sambar.start();
 
                 }

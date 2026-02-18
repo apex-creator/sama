@@ -17,8 +17,7 @@ public class Dasa {
     private final notif Notif;
     WatchService watchService = FileSystems.getDefault().newWatchService();
 
-    public Dasa() throws IOException {
-        notif NOTif = null;
+    public Dasa(notif NOTif) throws IOException {
         this.Notif = NOTif;
     }
 
@@ -76,7 +75,7 @@ public class Dasa {
                 Path fullpath = dir.resolve(filename);
                 String path = String.valueOf((fullpath));
                 String EventName = kind.name();
-                notif = (file + fullpath + EventName);
+                notif = (EventName + " " + file + " " + fullpath);
 
                 if (Notif != null) {
                     Notif.notif(notif);

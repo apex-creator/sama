@@ -1,18 +1,16 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Dasa {
 
     public static final Logger log = LoggerFactory.getLogger(Dasa.class);
-    static String address = "hello";
-    static int port = 9000;
+
     final Map<WatchKey, Path> keys = new ConcurrentHashMap<>();
     private final notif Notif;
     WatchService watchService = FileSystems.getDefault().newWatchService();
@@ -21,14 +19,13 @@ public class Dasa {
         this.Notif = NOTif;
     }
 
-    public void slave(ArrayNode node) throws Exception {
-
+    public void slave(List<String> node) throws Exception {
+        log.info("dasa triggered successfully");
         Path dir = null;
 
+        for (String pathString : node) {
 
-        for (JsonNode Jnode : node) {
-
-            String PathtoSync = Jnode.asText().trim();
+            String PathtoSync = pathString.trim();
             dir = Paths.get(PathtoSync);
 
             if (!Files.exists(dir) || !Files.isDirectory(dir)) {
@@ -79,19 +76,28 @@ public class Dasa {
 
                 if (Notif != null) {
                     Notif.notif(notif);
-
                 }
+
                 if (EventName.equals("ENTRY_CREATE")) {
                     log.info("file created  : {}   path: {}", filename, fullpath);
-
+                    // If the newly created item is a Directory, immediately register it!
+                    if (Files.isDirectory(fullpath)) {
+                        try {
+                            log.info("New folder detected! Wiring it into WatchService...");
+                            registerNewPath(fullpath.toString());
+                        } catch (Exception e) {
+                            log.error("Failed to dynamically watch new folder: {}", fullpath);
+                        }
+                    }
                 }
 
                 if (EventName.equals("ENTRY_MODIFY")) {
                     log.info("file modified  : {}   path: {}", filename, fullpath);
-
                 }
 
-                if (EventName.equals("ENTRY_DELETE")) log.info("file deleted  : {}   path: {}", filename, fullpath);
+                if (EventName.equals("ENTRY_DELETE")) {
+                    log.info("file deleted  : {}   path: {}", filename, fullpath);
+                }
 
             }
 
@@ -106,26 +112,29 @@ public class Dasa {
 
     }
 
-
-    public void registerNewPath(String path) throws Exception {
-
-        path = path.trim();
-        Path dir = Paths.get(path);
+    public void registerNewPath(String pathString) {
+        String cleanPath = pathString.trim();
+        Path dir = Paths.get(cleanPath);
 
         if (!Files.exists(dir) || !Files.isDirectory(dir)) {
-            log.warn("Invalid directory: ", dir);
+            log.warn("Invalid directory: {}", dir);
             return;
         }
 
-        WatchKey key = dir.register(
-                watchService,
-                StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_MODIFY,
-                StandardWatchEventKinds.ENTRY_DELETE
-        );
+        try {
+            WatchKey key = dir.register(
+                    watchService,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.ENTRY_MODIFY,
+                    StandardWatchEventKinds.ENTRY_DELETE
+            );
 
-        keys.put(key, dir);
-        log.info("Now watching: ", dir);
+            keys.put(key, dir);
+            log.info("Now watching: {}", dir);
+
+        } catch (IOException e) {
+            log.error("Failed to register path: {}", dir, e);
+        }
     }
 
 }

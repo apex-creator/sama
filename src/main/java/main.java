@@ -1,22 +1,14 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
-
 public class main {
-    public static final Logger log = LoggerFactory.getLogger(main.class);
-    static File configFile = new File("config_slave.json");
-    static ObjectMapper mapper = new ObjectMapper();
 
-    static ObjectNode config;
-    static ArrayNode node = null;
+    private static final Logger print = LoggerFactory.getLogger(main.class);
     static Dasa dasa;
     static Swami swami;
     static SlaveSocket dosa;
@@ -41,181 +33,43 @@ public class main {
     }
 
 
-    String path = null;
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
 
         Scanner sc = new Scanner(System.in);
-
-
-        String design = null;
-
-
-        Thread Dasa = new Thread(() -> {
-            try {
-                // PASS THE STRING, NOT THE NODE
-                dasa.slave(node);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        Thread Swami = new Thread(() -> {
-            try {
-                swami.master(node);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        //checks if config files exist if it doesn't then create it
-        if (configFile.exists() && configFile.length() > 0) {
-            config = (ObjectNode) mapper.readTree(configFile);
-        } else {
-            config = mapper.createObjectNode();
+        ConfigManager config = new ConfigManager();
+        String newDesign;
+        String design = ConfigManager.load("design");
+        if (design == null) {
+            print.info("configuration not found... ");
+            print.info("please enter your designation in the network.");
+            do {
+                newDesign = sc.nextLine();
+                if (!newDesign.equals("dasa") && !newDesign.equals("swami")) {
+                    print.info("Invalid input please enter if you are master or slave in the network");
+                }
+            } while (!newDesign.equals("dasa") && !newDesign.equals("swami"));
+            print.info("Updating config");
+            config.save("design", newDesign);
+            design = newDesign;
         }
 
-
-        JsonNode existing = config.get("path");
-        if (existing != null && existing.isArray()) {
-            node = (ArrayNode) existing;
-        } else {
-            node = mapper.createArrayNode();
-            config.set("path", node);
+        List<String> pathlist = config.LoadPaths();
+        if (pathlist.isEmpty()) {
+            print.info("please add paths you want to synchronise");
+            String newAddition = sc.nextLine();
+            config.addPath(newAddition);
         }
-
-
-        if (config.hasNonNull("design")) {
-            design = config.get("design").asText();
-            Dasa.start();
-            String IPv4 = config.get("SwamiIP").asText();
-            int port = config.get("port").asInt();
-            Thread sambar = new Thread(() -> {
+        if (design.equalsIgnoreCase("dasa")) {
+            Thread slave = new Thread(() -> {
                 try {
-                    dosa.client(IPv4, port);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-            });
-            sambar.start();
-        } else {
-            log.info("please enter your designations in the network....");
-            log.info("Dasa(slave)   ==>  1");
-            log.info("Swami(master) ==>  2");
-            System.out.print("================>  ");
-            int des = sc.nextInt();
-            sc.nextLine(); // consume newline
-            if ((des == 1) || (des == 2)) {
-                log.info("thanks.");
-                if (des == 1) {
-                    config.put("design", "slave");
-
-                    if (node.isEmpty()) {
-                        log.info("no directories found ...");
-                        System.out.print("Enter the directories you want synchronise...");
-                        String path = sc.nextLine();
-                        node.add(path);
-                        mapper
-                                .writerWithDefaultPrettyPrinter()
-                                .writeValue(configFile, config);
-
-                        log.info("<<<MEMORY_UPDATED>>>");
-                    }
-                    Dasa.start();
-                    System.out.print("Enter the IP of your swami or master module...");
-                    String ipv4 = sc.nextLine();
-                    System.out.print("Enter the port of your swami or master module...");
-                    int port = sc.nextInt();
-                    Thread sambar = new Thread(() -> {
-                        try {
-                            dosa.client(ipv4, port);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                    });
-                    sambar.start();
-
-                }
-                if (des == 2) {
-
-                    config.put("design", "master");
-
-                    if (node.isEmpty()) {
-                        log.info("no directory found.");
-                        System.out.print("please enter directory you have to synchronise...");
-                        String path = sc.nextLine();
-                        node.add(path);
-                        mapper
-                                .writerWithDefaultPrettyPrinter()
-                                .writeValue(configFile, config);
-
-                        log.info("<<<MEMORY_UPDATED>>>");
-
-                    }
-                    Swami.start();
-                }
-            }
-
-
-        }
-        commandLoop(sc);
-
-    }
-
-    static void commandLoop(Scanner sc) throws Exception {
-
-        intro();
-        while (true) {
-            System.out.print("SAMA> ");
-            String command = sc.nextLine().trim();
-            if (!command.equalsIgnoreCase("add") || !command.equalsIgnoreCase("list") || command.equalsIgnoreCase("exit")) {
-                System.out.print("INVALID INPUT!!!, PLEASE use ");
-                intro();
-            }
-            if (command.equalsIgnoreCase("add")) {
-                log.info("Enter path: ");
-                String newPath = sc.nextLine();
-
-                node.add(newPath);
-                String design = config.get("design").asText();
-                if (design.equalsIgnoreCase("slave")) {
-                    dasa.registerNewPath(newPath);
-                }
-                if (design.equalsIgnoreCase("master")) {
-                    swami.registerNewPath(newPath);
-                }
-
-                try {
-                    mapper
-                            .writerWithDefaultPrettyPrinter()
-                            .writeValue(configFile, config);
-
-                    log.info("Path added and saved!");
-
+                    dasa.slave(pathlist);
                 } catch (Exception e) {
-                    log.warn("Failed to save config.");
+                    print.info("failure in starter thread, {}", e.getCause());
                 }
-
-            } else if (command.equalsIgnoreCase("list")) {
-                log.info("Watched Folders:");
-                for (JsonNode n : node) {
-                    log.info(" - ", n.asText());
-                }
-
-            } else if (command.equalsIgnoreCase("exit")) {
-                log.info("Shutting down...");
-                System.exit(0);
-            }
+            });
+            slave.start();
         }
     }
 
-    static void intro() {
-        log.info("\n--- --- ---");
-        log.info("Type 'add' to watch a new folder.");
-        log.info("Type 'list' to see watched folders.");
-        log.info("Type 'exit' to stop.");
-    }
 }

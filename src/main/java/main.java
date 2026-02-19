@@ -36,40 +36,8 @@ public class main {
     public static void main(String[] args) {
 
 
-        Scanner sc = new Scanner(System.in);
-        ConfigManager config = new ConfigManager();
-        String newDesign;
-        String design = ConfigManager.load("design");
-        if (design == null) {
-            print.info("configuration not found... ");
-            print.info("please enter your designation in the network.");
-            do {
-                newDesign = sc.nextLine();
-                if (!newDesign.equals("dasa") && !newDesign.equals("swami")) {
-                    print.info("Invalid input please enter if you are master or slave in the network");
-                }
-            } while (!newDesign.equals("dasa") && !newDesign.equals("swami"));
-            print.info("Updating config");
-            config.save("design", newDesign);
-            design = newDesign;
-        }
-
-        List<String> pathlist = config.LoadPaths();
-        if (pathlist.isEmpty()) {
-            print.info("please add paths you want to synchronise");
-            String newAddition = sc.nextLine();
-            config.addPath(newAddition);
-        }
-        if (design.equalsIgnoreCase("dasa")) {
-            Thread slave = new Thread(() -> {
-                try {
-                    dasa.slave(pathlist);
-                } catch (Exception e) {
-                    print.info("failure in starter thread, {}", e.getCause());
-                }
-            });
-            slave.start();
-        }
+        CLI commandLine = new CLI(dasa, swami);
+        commandLine.start();
     }
 
 }

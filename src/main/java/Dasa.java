@@ -130,7 +130,7 @@ public class Dasa {
             );
 
             keys.put(key, dir);
-            log.info("Now watching: {}", dir);
+            
 
         } catch (IOException e) {
             log.error("Failed to register path: {}", dir, e);

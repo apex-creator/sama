@@ -1,5 +1,3 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +8,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.*;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,13 +24,13 @@ public class Swami {
     }
 
 
-    public void master(ArrayNode node) throws IOException {
+    public void master(List<String> node) throws IOException {
 
         Path dir = null;
 
-        for (JsonNode Jnode : node) {
+        for (String Jnode : node) {
 
-            String PathtoSync = Jnode.asText().trim();
+            String PathtoSync = Jnode.trim();
             dir = Paths.get(PathtoSync);
 
             if (!Files.exists(dir) || !Files.isDirectory(dir)) {
@@ -111,25 +110,29 @@ public class Swami {
     }
 
 
-    public void registerNewPath(String path) throws Exception {
-
-        path = path.trim();
-        Path dir = Paths.get(path);
+    public void registerNewPath(String pathString) {
+        String cleanPath = pathString.trim();
+        Path dir = Paths.get(cleanPath);
 
         if (!Files.exists(dir) || !Files.isDirectory(dir)) {
-            log.warn("Invalid directory: {} ", dir);
+            log.warn("Invalid directory: {}", dir);
             return;
         }
 
-        WatchKey key = dir.register(
-                watchService,
-                StandardWatchEventKinds.ENTRY_CREATE,
-                StandardWatchEventKinds.ENTRY_MODIFY,
-                StandardWatchEventKinds.ENTRY_DELETE
-        );
+        try {
+            WatchKey key = dir.register(
+                    watchService,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.ENTRY_MODIFY,
+                    StandardWatchEventKinds.ENTRY_DELETE
+            );
 
-        keys.put(key, dir);
-        log.info("Now watching: {}", dir);
+            keys.put(key, dir);
+
+
+        } catch (IOException e) {
+            log.error("Failed to register path: {}", dir, e);
+        }
     }
 }
 

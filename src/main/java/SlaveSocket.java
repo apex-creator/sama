@@ -56,7 +56,7 @@ public class SlaveSocket implements notif {
 
         String fileName = parts[0];
         String fullPath = parts[1];
-
+        log.info("from notif");
         log.info("Event: {}", EventName);
         log.info("File: {}", fileName);
         log.info("Path: {}", fullPath);

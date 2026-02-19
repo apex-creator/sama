@@ -40,7 +40,7 @@ public class ConfigManager {
         }
     }
 
-    static String load(String key) {
+    public String load(String key) {
 
         String Sql = "SELECT config_value FROM settings WHERE config_key = ?";
 
